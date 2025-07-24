@@ -33,11 +33,22 @@ const Main: FC = () => {
     setSelectedTask(task)
   }
 
-  const onChangeTask = (value: string, id: number): void => {
+  const onChangeTaskName = (value: string, id: number): void => {
     const newTaskList = [...taskList]
     const index = newTaskList.findIndex((task) => task.id === id)
     newTaskList[index].name = value
     setTaskList([...newTaskList])
+  }
+
+  const onChangeTaskCompleted = (id: number): void => {
+    const newTaskList = [...taskList]
+    const index = newTaskList.findIndex((task) => task.id === id)
+    newTaskList[index].completed = !newTaskList[index].completed
+    setTaskList([...newTaskList])
+
+    setTimeout(() => {
+      setTaskList(newTaskList.toSorted((a, b) => a.completed - b.completed))
+    }, 500)
   }
 
   const onRemoveTask = (id: number): void => {
@@ -70,6 +81,8 @@ const Main: FC = () => {
                   id={`task-check-${task.id}`}
                   type="checkbox"
                   className="mr-3"
+                  checked={task.completed}
+                  onChange={() => onChangeTaskCompleted(task.id)}
                 />
 
                 { isEdit ? (
@@ -77,12 +90,12 @@ const Main: FC = () => {
                     type="text"
                     className="td-input mr-3"
                     value={task.name}
-                    onChange={(e) => onChangeTask(e.target.value, task.id)}
+                    onChange={(e) => onChangeTaskName(e.target.value, task.id)}
                   />
                 ) : (
                   <label
                     htmlFor={`task-check-${task.id}`}
-                    className="mr-3"
+                    className={`mr-3 ${task.completed ? 'line-through' : ''}`}
                   >
                     {task.name}
                   </label>
