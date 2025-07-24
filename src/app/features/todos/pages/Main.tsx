@@ -14,7 +14,7 @@ const Main: FC = () => {
       setTaskList([
         {
           id: Date.now(),
-          name: newTask,
+          title: newTask,
           completed: false,
         },
         ...taskList,
@@ -33,10 +33,10 @@ const Main: FC = () => {
     setSelectedTask(task)
   }
 
-  const onChangeTaskName = (value: string, id: number): void => {
+  const onChangeTaskTitle = (value: string, id: number): void => {
     const newTaskList = [...taskList]
     const index = newTaskList.findIndex((task) => task.id === id)
-    newTaskList[index].name = value
+    newTaskList[index].title = value
     setTaskList([...newTaskList])
   }
 
@@ -65,9 +65,14 @@ const Main: FC = () => {
           placeholder="Add new task"
           className="td-input mr-2"
           value={newTask}
-          onInput={(e) => setNewTask(e.target.value)}
+          disabled={isEdit}
+          onChange={(e) => setNewTask(e.target.value)}
         />
-        <button className="td-button" disabled={!newTask} onClick={onAddTask}>
+        <button
+          className="td-button"
+          disabled={!newTask || isEdit}
+          onClick={onAddTask}
+        >
           Add
         </button>
       </div>
@@ -90,15 +95,15 @@ const Main: FC = () => {
                   <input
                     type="text"
                     className="td-input mr-3"
-                    value={task.name}
-                    onChange={(e) => onChangeTaskName(e.target.value, task.id)}
+                    value={task.title}
+                    onChange={(e) => onChangeTaskTitle(e.target.value, task.id)}
                   />
                 ) : (
                   <label
                     htmlFor={`task-check-${task.id}`}
                     className={`mr-3 ${task.completed ? 'line-through' : ''}`}
                   >
-                    {task.name}
+                    {task.title}
                   </label>
                 )}
 
