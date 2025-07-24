@@ -82,10 +82,11 @@ const Main: FC = () => {
                   type="checkbox"
                   className="mr-3"
                   checked={task.completed}
+                  disabled={isEdit}
                   onChange={() => onChangeTaskCompleted(task.id)}
                 />
 
-                { isEdit ? (
+                { isEdit && (selectedTask.id === task.id) ? (
                   <input
                     type="text"
                     className="td-input mr-3"
@@ -102,7 +103,7 @@ const Main: FC = () => {
                 )}
 
 
-                { isEdit ? (
+                { isEdit && (selectedTask.id === task.id) ? (
                   <button
                     className="td-button mr-3"
                     onClick={() => onSaveTask()}
@@ -121,6 +122,7 @@ const Main: FC = () => {
 
                 <button
                   className="td-button"
+                  disabled={isEdit}
                   onClick={() => onRemoveTask(task.id)}
                 >
                   Remove
