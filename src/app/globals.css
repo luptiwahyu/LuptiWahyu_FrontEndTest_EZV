@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.td-button {
+  @apply
+  py-1
+  px-2
+  border
+  rounded-md
+  bg-white
+  cursor-pointer
+  hover:bg-neutral-100
+  disabled:pointer-events-none
+  disabled:opacity-25;
+}
+
+.td-input {
+  @apply
+  border
+  rounded-md
+  py-1
+  px-2;
+}
