@@ -2,18 +2,21 @@
 
 import { FC, useState } from 'react'
 import type { Task } from '../models/Task'
+import { useGetTodosQuery, useAddTodoMutation, useDeleteTodoMutation } from '../services/api'
 
 const Main: FC = () => {
   const [newTask, setNewTask] = useState<string>('')
-  const [taskList, setTaskList] = useState<Task[]>([])
+  // const [taskList, setTaskList] = useState<Task[]>([])
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [selectedTask, setSelectedTask] = useState<Task>({})
 
+  const { data: taskList, error, isLoading } = useGetTodosQuery()
+  const isFetchSucceed = !isLoading && !error
+  const isEmptyData = isFetchSucceed && !taskList.length
+
   const onAddTask = (): void => {
     const title = newTask.trim()
-    console.log('title: ', title)
     if (title !== '') {
-      console.log('masukk')
       setTaskList([
         {
           id: Date.now(),
@@ -58,7 +61,7 @@ const Main: FC = () => {
     }, 500)
   }
 
-  const onRemoveTask = (id: number): void => {
+  const onRemoveTask = async (id: number): void => {
     setTaskList(taskList.filter((task) => task.id !== id))
   }
 
@@ -85,65 +88,69 @@ const Main: FC = () => {
       </div>
 
       <div>
-        <ul>
-          {
-            taskList.map((task) => (
-              <li className="mb-4" key={task.id}>
+        { isLoading && <span>Loading...</span> }
+
+        { error && <span className="text-red-500">Error fetching data</span> }
+
+        { isEmptyData && <span>Empty data</span> }
+
+        {
+          isFetchSucceed && taskList.map((task) => (
+            <div className="mb-4" key={task.id}>
+              <input
+                id={`task-check-${task.id}`}
+                type="checkbox"
+                className="mr-3"
+                checked={task.completed}
+                disabled={isEdit}
+                onChange={() => onChangeTaskCompleted(task.id)}
+              />
+
+              { isEdit && (selectedTask.id === task.id) ? (
                 <input
-                  id={`task-check-${task.id}`}
-                  type="checkbox"
-                  className="mr-3"
-                  checked={task.completed}
-                  disabled={isEdit}
-                  onChange={() => onChangeTaskCompleted(task.id)}
+                  type="text"
+                  className="td-input mr-3"
+                  value={task.title}
+                  onChange={(e) => onChangeTaskTitle(e.target.value, task.id)}
                 />
-
-                { isEdit && (selectedTask.id === task.id) ? (
-                  <input
-                    type="text"
-                    className="td-input mr-3"
-                    value={task.title}
-                    onChange={(e) => onChangeTaskTitle(e.target.value, task.id)}
-                  />
-                ) : (
-                  <label
-                    htmlFor={`task-check-${task.id}`}
-                    className={`mr-3 ${task.completed ? 'line-through' : ''}`}
-                  >
-                    {task.title}
-                  </label>
-                )}
-
-
-                { isEdit && (selectedTask.id === task.id) ? (
-                  <button
-                    className="td-button mr-3"
-                    disabled={!task.title.trim()}
-                    onClick={() => onSaveTask(task)}
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    className="td-button mr-3"
-                    disabled={isEdit}
-                    onClick={() => onEditTask(task)}
-                  >
-                    Edit
-                  </button>
-                )}
-
-                <button
-                  className="td-button"
-                  disabled={isEdit}
-                  onClick={() => onRemoveTask(task.id)}
+              ) : (
+                <label
+                  htmlFor={`task-check-${task.id}`}
+                  className={`mr-3 ${task.completed ? 'line-through' : ''}`}
                 >
-                  Remove
+                  {task.title}
+                </label>
+              )}
+
+
+              { isEdit && (selectedTask.id === task.id) ? (
+                <button
+                  className="td-button mr-3"
+                  disabled={!task.title.trim()}
+                  onClick={() => onSaveTask(task)}
+                >
+                  Save
                 </button>
-              </li>
-            ))
-          }
-        </ul>
+              ) : (
+                <button
+                  className="td-button mr-3"
+                  disabled={isEdit}
+                  onClick={() => onEditTask(task)}
+                >
+                  Edit
+                </button>
+              )}
+
+              <button
+                className="td-button"
+                disabled={isEdit}
+                onClick={() => onRemoveTask(task.id)}
+              >
+                Remove
+              </button>
+            </div>
+          ))
+        }
       </div>
     </div>
   )
