@@ -54,7 +54,7 @@ export const todoApi = createApi({
             const index = draft.findIndex((task) => task.id === id)
             if (index >= 0) {
               draft[index].title = title
-              draft[index].completed = !completed
+              draft[index].completed = completed
             }
           }),
         )

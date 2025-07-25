@@ -3,31 +3,33 @@
 import { FC, useState } from 'react'
 import type { Task } from '../models/Task'
 import {
+  todoApi,
   useGetTodosQuery,
   useAddTodoMutation,
   useUpdateTodoMutation,
   useDeleteTodoMutation,
 } from '../services/api'
+import { useDispatch } from 'react-redux'
 
 const Main: FC = () => {
   const [newTask, setNewTask] = useState<string>('')
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [selectedTask, setSelectedTask] = useState<Task>({})
-
   const { data: taskList = [], error, isLoading } = useGetTodosQuery()
   const [addTodo] = useAddTodoMutation()
   const [updateTodo] = useUpdateTodoMutation()
-  const [deleteTodo, result] = useDeleteTodoMutation()
+  const [deleteTodo] = useDeleteTodoMutation()
   const isFetchSucceed = !isLoading && !error
   const isEmptyData = isFetchSucceed && !taskList.length
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const dispatch = useDispatch()
 
   const onAddTask = async (): void => {
     setErrorMessage('')
     const title = newTask.trim()
     if (title !== '') {
       try {
-        await addTodo({
+        await addTodo<Task>({
           id: Date.now(),
           title,
           completed: false,
@@ -50,29 +52,35 @@ const Main: FC = () => {
     setSelectedTask(task)
     setErrorMessage('')
 
-    // const index = taskList.findIndex((i) => i.id === task.id)
-    // taskList[index] = selectedTask
-    // setTaskList([...taskList])
-
     try {
-      await updateTodo(task).unwrap()
+      await updateTodo<Task>({
+        id: task.id,
+        title: task.title,
+        completed: task.completed,
+      }).unwrap()
     } catch {
       setErrorMessage('Failed to update task')
     }
   }
 
   const onChangeTaskTitle = (value: string, id: number): void => {
-    const newTaskList = [...taskList]
-    const index = newTaskList.findIndex((task) => task.id === id)
-    newTaskList[index].title = value
-    setTaskList([...newTaskList])
+    const todos = dispatch(
+      todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
+        const index = draft.findIndex((task) => task.id === id)
+        draft[index].title = value
+      }),
+    )
   }
 
   const onChangeTaskCompleted = async (task: Task): void => {
     setErrorMessage('')
 
     try {
-      await updateTodo(task).unwrap()
+      await updateTodo<Task>({
+        id: task.id,
+        title: task.title,
+        completed: !task.completed,
+      }).unwrap()
     } catch {
       setErrorMessage('Failed to checked task')
     }
@@ -80,7 +88,7 @@ const Main: FC = () => {
 
   const onRemoveTask = async (id: number): void => {
     try {
-      await deleteTodo(id).unwrap()
+      await deleteTodo<number>(id).unwrap()
     } catch {
       setErrorMessage('Failed to remove task')
     }
