@@ -11,20 +11,26 @@ const Main: FC = () => {
 
   const { data: taskList = [], error, isLoading } = useGetTodosQuery()
   const [addTodo] = useAddTodoMutation()
-  const [deleteTodo] = useDeleteTodoMutation()
+  const [deleteTodo, result] = useDeleteTodoMutation()
   const isFetchSucceed = !isLoading && !error
   const isEmptyData = isFetchSucceed && !taskList.length
   const [errorMessage, setErrorMessage] = useState<string>('')
 
   const onAddTask = async (): void => {
+    setErrorMessage('')
     const title = newTask.trim()
     if (title !== '') {
-      await addTodo({
-        id: Date.now(),
-        title,
-        completed: false,
-      })
-      setNewTask('')
+      try {
+        await addTodo({
+          id: Date.now(),
+          title,
+          completed: false,
+        }).unwrap()
+
+        setNewTask('')
+      } catch {
+        setErrorMessage('Failed to add task')
+      }
     }
   }
 
@@ -62,15 +68,17 @@ const Main: FC = () => {
 
   const onRemoveTask = async (id: number): void => {
     try {
-      await deleteTodo(id)
-    } catch {}
+      await deleteTodo(id).unwrap()
+    } catch {
+      setErrorMessage('Failed to remove task')
+    }
   }
 
   return (
     <div className="p-4">
       <h1 className="text-2xl mb-4">To Do List</h1>
 
-      <div className="mb-4">
+      <div className="">
         <input
           type="text"
           placeholder="Add new task"
@@ -88,13 +96,17 @@ const Main: FC = () => {
         </button>
       </div>
 
-      <div>
+      <div className="h-9 leading-9 text-sm">
         { isLoading && <span>Loading...</span> }
 
         { error && <span className="text-red-500">Error fetching data</span> }
 
-        { isEmptyData && <span>Empty data</span> }
+        { !!errorMessage && <span className="text-red-500">{errorMessage}</span> }
 
+        { isEmptyData && <span>Empty data</span> }
+      </div>
+
+      <div>
         {
           isFetchSucceed && taskList.map((task) => (
             <div className="mb-4" key={task.id}>
