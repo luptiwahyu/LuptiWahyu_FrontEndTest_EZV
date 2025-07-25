@@ -10,11 +10,14 @@ const Main: FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task>({})
 
   const onAddTask = (): void => {
-    if (newTask.trim() != '') {
+    const title = newTask.trim()
+    console.log('title: ', title)
+    if (title !== '') {
+      console.log('masukk')
       setTaskList([
         {
           id: Date.now(),
-          title: newTask,
+          title,
           completed: false,
         },
         ...taskList,
@@ -31,6 +34,10 @@ const Main: FC = () => {
   const onSaveTask = (task: Task): void => {
     setIsEdit(false)
     setSelectedTask(task)
+
+    const index = taskList.findIndex((i) => i.id === task.id)
+    taskList[index] = selectedTask
+    setTaskList([...taskList])
   }
 
   const onChangeTaskTitle = (value: string, id: number): void => {
@@ -70,7 +77,7 @@ const Main: FC = () => {
         />
         <button
           className="td-button"
-          disabled={!newTask || isEdit}
+          disabled={!newTask.trim() || isEdit}
           onClick={onAddTask}
         >
           Add
@@ -111,7 +118,8 @@ const Main: FC = () => {
                 { isEdit && (selectedTask.id === task.id) ? (
                   <button
                     className="td-button mr-3"
-                    onClick={() => onSaveTask()}
+                    disabled={!task.title.trim()}
+                    onClick={() => onSaveTask(task)}
                   >
                     Save
                   </button>
