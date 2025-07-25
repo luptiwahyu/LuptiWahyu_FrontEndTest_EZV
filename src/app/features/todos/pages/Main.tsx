@@ -2,7 +2,12 @@
 
 import { FC, useState } from 'react'
 import type { Task } from '../models/Task'
-import { useGetTodosQuery, useAddTodoMutation, useDeleteTodoMutation } from '../services/api'
+import {
+  useGetTodosQuery,
+  useAddTodoMutation,
+  useUpdateTodoMutation,
+  useDeleteTodoMutation,
+} from '../services/api'
 
 const Main: FC = () => {
   const [newTask, setNewTask] = useState<string>('')
@@ -11,6 +16,7 @@ const Main: FC = () => {
 
   const { data: taskList = [], error, isLoading } = useGetTodosQuery()
   const [addTodo] = useAddTodoMutation()
+  const [updateTodo] = useUpdateTodoMutation()
   const [deleteTodo, result] = useDeleteTodoMutation()
   const isFetchSucceed = !isLoading && !error
   const isEmptyData = isFetchSucceed && !taskList.length
@@ -39,13 +45,20 @@ const Main: FC = () => {
     setSelectedTask(task)
   }
 
-  const onSaveTask = (task: Task): void => {
+  const onSaveTask = async (task: Task): void => {
     setIsEdit(false)
     setSelectedTask(task)
+    setErrorMessage('')
 
-    const index = taskList.findIndex((i) => i.id === task.id)
-    taskList[index] = selectedTask
-    setTaskList([...taskList])
+    // const index = taskList.findIndex((i) => i.id === task.id)
+    // taskList[index] = selectedTask
+    // setTaskList([...taskList])
+
+    try {
+      await updateTodo(task).unwrap()
+    } catch {
+      setErrorMessage('Failed to update task')
+    }
   }
 
   const onChangeTaskTitle = (value: string, id: number): void => {
@@ -55,15 +68,14 @@ const Main: FC = () => {
     setTaskList([...newTaskList])
   }
 
-  const onChangeTaskCompleted = (id: number): void => {
-    const newTaskList = [...taskList]
-    const index = newTaskList.findIndex((task) => task.id === id)
-    newTaskList[index].completed = !newTaskList[index].completed
-    setTaskList([...newTaskList])
+  const onChangeTaskCompleted = async (task: Task): void => {
+    setErrorMessage('')
 
-    setTimeout(() => {
-      setTaskList(newTaskList.toSorted((a, b) => a.completed - b.completed))
-    }, 500)
+    try {
+      await updateTodo(task).unwrap()
+    } catch {
+      setErrorMessage('Failed to checked task')
+    }
   }
 
   const onRemoveTask = async (id: number): void => {
@@ -116,7 +128,7 @@ const Main: FC = () => {
                 className="mr-3"
                 checked={task.completed}
                 disabled={isEdit}
-                onChange={() => onChangeTaskCompleted(task.id)}
+                onChange={() => onChangeTaskCompleted(task)}
               />
 
               { isEdit && (selectedTask.id === task.id) ? (

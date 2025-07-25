@@ -15,6 +15,9 @@ export const todoApi = createApi({
           _limit: 10,
         },
       }),
+      transformResponse: (response) => {
+        return response.toSorted((a, b) => a.completed - b.completed)
+      },
     }),
     addTodo: builder.mutation({
       query: (newTask) => ({
@@ -45,6 +48,23 @@ export const todoApi = createApi({
           completed,
         },
       }),
+      async onQueryStarted({ id, title, completed }, { dispatch, queryFulfilled }) {
+        const updateResult = dispatch(
+          todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
+            const index = draft.findIndex((task) => task.id === id)
+            if (index >= 0) {
+              draft[index].title = title
+              draft[index].completed = !completed
+            }
+          }),
+        )
+
+        try {
+          await queryFulfilled
+        } catch {
+          updateResult.undo()
+        }
+      },
     }),
     deleteTodo: builder.mutation({
       query: (id) => ({
