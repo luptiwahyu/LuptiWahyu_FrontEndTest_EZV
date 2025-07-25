@@ -15,7 +15,13 @@ const Main: FC = () => {
   const [newTask, setNewTask] = useState<string>('')
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [selectedTask, setSelectedTask] = useState<Task>({})
-  const { data: taskList = [], error, isLoading } = useGetTodosQuery()
+  const [page, setPage] = useState<number>(0)
+  const {
+    data: taskList,
+    error,
+    isLoading,
+    isFetching,
+  } = useGetTodosQuery(page)
   const [addTodo] = useAddTodoMutation()
   const [updateTodo] = useUpdateTodoMutation()
   const [deleteTodo] = useDeleteTodoMutation()
@@ -33,6 +39,7 @@ const Main: FC = () => {
           id: Date.now(),
           title,
           completed: false,
+          start: page,
         }).unwrap()
 
         setNewTask('')
@@ -57,6 +64,7 @@ const Main: FC = () => {
         id: task.id,
         title: task.title,
         completed: task.completed,
+        start: page,
       }).unwrap()
     } catch {
       setErrorMessage('Failed to update task')
@@ -65,7 +73,7 @@ const Main: FC = () => {
 
   const onChangeTaskTitle = (value: string, id: number): void => {
     const todos = dispatch(
-      todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
+      todoApi.util.updateQueryData('getTodos', page, (draft) => {
         const index = draft.findIndex((task) => task.id === id)
         draft[index].title = value
       }),
@@ -80,18 +88,33 @@ const Main: FC = () => {
         id: task.id,
         title: task.title,
         completed: !task.completed,
+        start: page,
       }).unwrap()
     } catch {
-      setErrorMessage('Failed to checked task')
+      setErrorMessage('Failed to update task')
     }
   }
 
   const onRemoveTask = async (id: number): void => {
+    setErrorMessage('')
     try {
-      await deleteTodo<number>(id).unwrap()
+      await deleteTodo<Task>({
+        id,
+        start: page,
+      }).unwrap()
     } catch {
       setErrorMessage('Failed to remove task')
     }
+  }
+
+  const onPreviousPage = (): void => {
+    setErrorMessage('')
+    setPage(page - 10)
+  }
+
+  const onNextPage = (): void => {
+    setErrorMessage('')
+    setPage(page + 10)
   }
 
   return (
@@ -117,7 +140,7 @@ const Main: FC = () => {
       </div>
 
       <div className="h-9 leading-9 text-sm">
-        { isLoading && <span>Loading...</span> }
+        { (isLoading || isFetching) && <span>Loading...</span> }
 
         { error && <span className="text-red-500">Error fetching data</span> }
 
@@ -129,7 +152,7 @@ const Main: FC = () => {
       <div>
         {
           isFetchSucceed && taskList.map((task) => (
-            <div className="mb-4" key={task.id}>
+            <div className="mb-3" key={task.id}>
               <input
                 id={`task-check-${task.id}`}
                 type="checkbox"
@@ -158,7 +181,7 @@ const Main: FC = () => {
 
               { isEdit && (selectedTask.id === task.id) ? (
                 <button
-                  className="td-button mr-3"
+                  className="td-button td-button--small mr-3"
                   disabled={!task.title.trim()}
                   onClick={() => onSaveTask(task)}
                 >
@@ -166,7 +189,7 @@ const Main: FC = () => {
                 </button>
               ) : (
                 <button
-                  className="td-button mr-3"
+                  className="td-button td-button--small mr-3"
                   disabled={isEdit}
                   onClick={() => onEditTask(task)}
                 >
@@ -175,7 +198,7 @@ const Main: FC = () => {
               )}
 
               <button
-                className="td-button"
+                className="td-button td-button--small"
                 disabled={isEdit}
                 onClick={() => onRemoveTask(task.id)}
               >
@@ -185,6 +208,26 @@ const Main: FC = () => {
           ))
         }
       </div>
+
+      { isFetchSucceed && (
+        <div className="mt-8">
+          <button
+            className="td-button td-button--small mr-3"
+            disabled={isFetching || page < 10}
+            onClick={onPreviousPage}
+          >
+            Previous
+          </button>
+          <button
+            className="td-button td-button--small"
+            disabled={isFetching || page >= 190}
+            onClick={onNextPage}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
     </div>
   )
 }

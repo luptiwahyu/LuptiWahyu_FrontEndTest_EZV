@@ -8,10 +8,10 @@ export const todoApi = createApi({
   }),
   endpoints: (builder) => ({
     getTodos: builder.query<Task[], void>({
-      query: () => ({
+      query: (start: number) => ({
         url: 'todos',
         params: {
-          _start: 0,
+          _start: start,
           _limit: 10,
         },
       }),
@@ -20,15 +20,15 @@ export const todoApi = createApi({
       },
     }),
     addTodo: builder.mutation({
-      query: (newTask) => ({
-        url: 'todos',
+      query: (task: Task) => ({
+        url: 'todos-xx',
         method: 'POST',
-        body: newTask,
+        body: task,
       }),
-      async onQueryStarted(newTask, { dispatch, queryFulfilled }) {
+      async onQueryStarted(task, { dispatch, queryFulfilled }) {
         const postResult = dispatch(
-          todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
-            draft.unshift(newTask)
+          todoApi.util.updateQueryData('getTodos', task.start, (draft) => {
+            draft.unshift(task)
           }),
         )
 
@@ -40,17 +40,17 @@ export const todoApi = createApi({
       },
     }),
     updateTodo: builder.mutation({
-      query: ({ id, title, completed }) => ({
-        url: `todos/${id}`,
+      query: ({ id, title, completed, start }) => ({
+        url: `todos-xx/${id}`,
         method: 'PUT',
         body: {
           title,
           completed,
         },
       }),
-      async onQueryStarted({ id, title, completed }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ id, title, completed, start }, { dispatch, queryFulfilled }) {
         const updateResult = dispatch(
-          todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
+          todoApi.util.updateQueryData('getTodos', start, (draft) => {
             const index = draft.findIndex((task) => task.id === id)
             if (index >= 0) {
               draft[index].title = title
@@ -67,13 +67,13 @@ export const todoApi = createApi({
       },
     }),
     deleteTodo: builder.mutation({
-      query: (id) => ({
-        url: `todos/${id}`,
+      query: ({ id, start }) => ({
+        url: `todos-xx/${id}`,
         method: 'DELETE',
       }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ id, start }, { dispatch, queryFulfilled }) {
         const deleteResult = dispatch(
-          todoApi.util.updateQueryData('getTodos', undefined, (draft) => {
+          todoApi.util.updateQueryData('getTodos', start, (draft) => {
             const index = draft.findIndex((task) => task.id === id)
             if (index >= 0) draft.splice(index, 1)
           }),
