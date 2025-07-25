@@ -6,25 +6,24 @@ import { useGetTodosQuery, useAddTodoMutation, useDeleteTodoMutation } from '../
 
 const Main: FC = () => {
   const [newTask, setNewTask] = useState<string>('')
-  // const [taskList, setTaskList] = useState<Task[]>([])
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [selectedTask, setSelectedTask] = useState<Task>({})
 
-  const { data: taskList, error, isLoading } = useGetTodosQuery()
+  const { data: taskList = [], error, isLoading } = useGetTodosQuery()
+  const [addTodo] = useAddTodoMutation()
+  const [deleteTodo] = useDeleteTodoMutation()
   const isFetchSucceed = !isLoading && !error
   const isEmptyData = isFetchSucceed && !taskList.length
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
-  const onAddTask = (): void => {
+  const onAddTask = async (): void => {
     const title = newTask.trim()
     if (title !== '') {
-      setTaskList([
-        {
-          id: Date.now(),
-          title,
-          completed: false,
-        },
-        ...taskList,
-      ])
+      await addTodo({
+        id: Date.now(),
+        title,
+        completed: false,
+      })
       setNewTask('')
     }
   }
@@ -62,7 +61,9 @@ const Main: FC = () => {
   }
 
   const onRemoveTask = async (id: number): void => {
-    setTaskList(taskList.filter((task) => task.id !== id))
+    try {
+      await deleteTodo(id)
+    } catch {}
   }
 
   return (
