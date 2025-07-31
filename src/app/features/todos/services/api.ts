@@ -21,7 +21,7 @@ export const todoApi = createApi({
     }),
     addTodo: builder.mutation({
       query: (task: Task) => ({
-        url: 'todos-xx',
+        url: 'todos',
         method: 'POST',
         body: task,
       }),
@@ -41,7 +41,7 @@ export const todoApi = createApi({
     }),
     updateTodo: builder.mutation({
       query: ({ id, title, completed, start }) => ({
-        url: `todos-xx/${id}`,
+        url: `todos/${id}`,
         method: 'PUT',
         body: {
           title,
@@ -68,7 +68,7 @@ export const todoApi = createApi({
     }),
     deleteTodo: builder.mutation({
       query: ({ id, start }) => ({
-        url: `todos-xx/${id}`,
+        url: `todos/${id}`,
         method: 'DELETE',
       }),
       async onQueryStarted({ id, start }, { dispatch, queryFulfilled }) {
